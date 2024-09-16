@@ -17,4 +17,15 @@ class Device extends Model
     public function branch(){
         return $this->belongsTo(Branch::class);
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function clientAttendances()
+    {
+        return $this->belongsTo(ClientAttendance::class);
+    }
+    
 }

@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\v2;
 
-use Carbon\Carbon;
-use App\Models\Weekly;
-use App\Models\v1\User;
+
 use App\Models\v1\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v2\ScheduleAddRequest;
 use App\Http\Resources\v2\Schedule\SchedulesResource;
-use App\Http\Requests\v2\Schedule\ScheduleUpdateRequest;
+use App\Http\Requests\v2\Schedule\ScheduleUpdateRequest; 
 
 class ScheduleController extends Controller
 {

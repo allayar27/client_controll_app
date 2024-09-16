@@ -4,8 +4,10 @@ namespace App\Http\Controllers\v1\Clients;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Client\ClientAttendanceAddRequest;
+use App\Models\BaseModel;
 use App\Models\v1\ClientAttendance;
 use App\Models\v1\Clients;
+use App\Models\v1\Device;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +16,20 @@ class ClientAttendanceController extends Controller
 {
     public function add(ClientAttendanceAddRequest $request)
     {
+        
+        $device = Device::findOrFail($request->device_id);
+        $branchId = $device->branch_id;
+        //return $branchId;
         DB::beginTransaction();
         try {
             $validated = $request->validated();
 
             $client = Clients::query()->firstOrCreate(
-                ['id' => $validated['client_id']],
                 [
+                    'id' => $validated['client_id'],
+                    'branch_id' => $branchId
+                ],
+                [ 
                     'gender' => $validated['gender'],
                     'age' => $validated['age'],
                 ]);
@@ -31,6 +40,7 @@ class ClientAttendanceController extends Controller
             // Проверяем, было ли посещение сегодня
             $lastAttendance = ClientAttendance::query()->with('clients')
                 ->where('device_id', $validated['device_id'])
+                ->where('branch_id', $branchId)
                 ->where('clients_id', $validated['client_id'])
                 ->where('date', '<=', $yesterday)
                 ->latest('date')
@@ -64,7 +74,8 @@ class ClientAttendanceController extends Controller
                 'device_id' => $validated['device_id'],
                 'date' => $time,
                 'score' => $validated['score'],
-                'status' => $userStatus
+                'status' => $userStatus,
+                'branch_id' => $branchId
             ]);
 
 

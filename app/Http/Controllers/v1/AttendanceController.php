@@ -8,6 +8,7 @@ use App\Models\v1\User;
 use App\Models\v1\Attendance;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Attendance\AttendanceAddRequest;
+use App\Models\BaseModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,10 @@ class AttendanceController extends Controller
 {
     public function add(AttendanceAddRequest $request)
     {
+        $device = Device::findOrFail($request->device_id);
+        $branchId = $device->branch_id;
+        //return $branchId;
+        BaseModel::setConnectionByBranchId($branchId);
         DB::beginTransaction();
         try {
             $user = User::findOrFail($request->user_id);
@@ -23,7 +28,7 @@ class AttendanceController extends Controller
                     'error' => 'Image is not associated with a valid user.'
                 ], 400);
             }
-            $device = Device::findOrFail($request->device_id);
+            
             if ($user->branch->id != $device->branch->id) {
                 return response()->json([
                     'error' => 'Invalid person'
@@ -37,7 +42,7 @@ class AttendanceController extends Controller
                 'device_id' => $validated['device_id'],
                 'time' => $time,
                 'score' => $validated['score'],
-            ]);
+            ]); 
             foreach ($validated['images'] as $image) {
                 $attendance->images()->create([
                     'name' => $image,

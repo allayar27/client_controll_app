@@ -42,6 +42,7 @@ class EmployeeController extends Controller
             'password' =>  Hash::make($data['password']),
             'role' => $data['role'],
         ]);
+        
         return response()->json([
            'success' => true,
            'message' => 'Employee added successfully'

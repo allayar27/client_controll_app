@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\v1\User;
 
+use App\Models\BaseModel;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UserUpdateRequest extends FormRequest
@@ -30,5 +31,14 @@ class UserUpdateRequest extends FormRequest
             'images' => 'array',
             'images.*' => 'file',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $branch_id = $this->get('branch_id');
+        if ($branch_id) {
+            BaseModel::setConnectionByBranchId($branch_id);
+        }
+
     }
 }

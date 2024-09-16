@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\v1\User;
 
+use App\Models\BaseModel;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UserAddRequest extends FormRequest
@@ -26,9 +27,18 @@ class UserAddRequest extends FormRequest
             'position_id' => 'required|exists:positions,id',
             'branch_id' => 'required|exists:branches,id',
             'schedule_id' => 'required|exists:schedules,id',
-            'phone'  => 'required',
+            'phone' => 'required',
             'images' => 'array',
             'images.*' => 'file',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $branch_id = $this->get('branch_id');
+        if ($branch_id) {
+            BaseModel::setConnectionByBranchId($branch_id);
+        }
+
     }
 }

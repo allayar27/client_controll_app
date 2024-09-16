@@ -14,6 +14,7 @@ use App\Http\Requests\v1\User\UserAddRequest;
 use App\Http\Requests\v1\User\UserUpdateRequest;
 use App\Http\Requests\v1\User\UserAddImageRequest;
 use App\Http\Resources\v1\User\UserImagesResource;
+use App\Models\BaseModel;
 
 class UserController extends Controller
 {
@@ -27,6 +28,7 @@ class UserController extends Controller
             'phone' => $data['phone'],
             'schedule_id' => $data['schedule_id'],
         ]);
+
         $this->uploadImages($user, $request);
         return response()->json([
             'success' => true,
@@ -36,6 +38,7 @@ class UserController extends Controller
 
     public function all()
     {
+
         $users = User::latest()->get();
         return response()->json([
             'total' => $users->count(),
@@ -45,9 +48,10 @@ class UserController extends Controller
 
     public function update($id, UserUpdateRequest $request)
     {
+        
         $user = User::findOrFail($id);
+        $data = $request->validated();
         if ($user) {
-            $data = $request->validated();
             $user->update($data);
             $this->uploadImages($user, $request);
             return response()->json([
@@ -74,6 +78,8 @@ class UserController extends Controller
     public function delete($id)
     {
         $user = User::findOrFail($id);
+        $branch_id = $user->branch_id;
+        BaseModel::setConnectionByBranchId($branch_id);
         if ($user) {
             $user->delete();
             return response()->json([

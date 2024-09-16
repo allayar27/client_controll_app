@@ -12,41 +12,77 @@ use App\Models\v1\Attendance;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Branch\BranchAddRequest;
+use App\Http\Requests\v1\Branch\BranchUpdateRequest;
 use App\Http\Resources\v1\Branch\BranchsResource;
+use Exception;
 
 class BranchController extends Controller
 {
     public function add(BranchAddRequest $request)
     {
         $data = $request->validated();
-        $branch = Branch::create([
-            'name' => $data['name'],
-            'location' => $data['location'],
-        ]);
-        $devices = [];
-        foreach (['first', 'second'] as $deviceName) {
-            $devices[] = [
-                'name' => $deviceName,
-                'branch_id' => $branch->id
-            ];
+
+        try {
+            DB::connection('mysql_branch_1')->transaction(function () use ($data) {
+                DB::connection('mysql_branch_1')->table('branches')->insert($data);
+            });
+
+            DB::connection('mysql_branch_2')->transaction(function () use ($data) {
+                DB::connection('mysql_branch_2')->table('branches')->insert($data);
+            });
+
+            return response()->json([
+                'success' => true,
+            ], 201);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'error' => 'An error occurred while recording branches.',
+                'details' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ], 500);
         }
-        Device::insert($devices);
-        return response()->json([
-            'success' => true,
-        ], 201);
     }
 
 
-    public function update(Request $request, Branch $branch)
+    public function update($id)
     {
-        if ($branch) {
-            $branch->update([
-                'name' => $request->input('name', $branch->name),
-                'location' => $request->input('location', $branch->location),
-            ]);
+        
+        $branch1 = DB::connection('mysql_branch_1')->table('branches')->find($id);
+        $branch2 = DB::connection('mysql_branch_2')->table('branches')->find($id);
+
+        if ($branch1 && $branch2) {
+            try {
+                DB::connection('mysql_branch_1')->transaction(function () use ($branch1, $id) {
+                    DB::connection('mysql_branch_1')->table('branches')->where('id', $id)->update([
+                        'name' => request()->input('name', $branch1->name),
+                        'location' => request()->input('location', $branch1->location),
+                    ]);
+                });
+
+                DB::connection('mysql_branch_2')->transaction(function () use ($branch2, $id) {
+                    DB::connection('mysql_branch_2')->table('branches')->where('id', $id)->update([
+                        'name' => request()->input('name', $branch2->name),
+                        'location' => request()->input('location', $branch2->location),
+                    ]);
+                });
+
+                return response()->json([
+                    'success' => true,
+                ], 200);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'An error occurred while updating branches.',
+                    'details' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                ], 500);
+            }
+        } else {
             return response()->json([
-                'success' => true,
-            ]);
+                'error' => 'Branch not found.',
+            ], 404);
         }
     }
 
@@ -60,70 +96,35 @@ class BranchController extends Controller
         ]);
     }
 
-    // public function updateWorkDays()
-    // {
-    //     // Barcha `Work_Days` yozuvlarini olish
-    //     $all = Work_Days::all();
-
-    //     // Filiallar bo'yicha foydalanuvchilar sonini oldindan olish
-    //     $branchUsersCount = User::select('branch_id', DB::raw('count(*) as count'))
-    //         ->groupBy('branch_id')
-    //         ->pluck('count', 'branch_id');
-
-    //     foreach ($all as $days) {
-    //         $day = $days->work_day;
-    //         $branchId = $days->branch_id;
-
-    //         // Filial uchun foydalanuvchilar sonini olish
-    //         $workersCount = Branch::find($branchId)->users->count();
-
-    //         // Ushbu filial va kun uchun barcha kelishlar sonini olish
-    //         $allComersCount = Attendance::whereDate('created_at', $day)
-    //             ->where('type', 'in')
-    //             ->where('branch_id', $branchId)
-    //             ->count();
-
-    //         // Ushbu filial va kun uchun kech qolgan ishchilar sonini olish
-    //         $lateWorkersCount = Attendance::whereDate('created_at', $day)
-    //             ->where('type', 'in')
-    //             ->where('branch_id', $branchId)
-    //             ->whereHas('user.schedule', function ($scheduleQuery) {
-    //                 $scheduleQuery->whereColumn('attendances.time', '>', 'schedules.time_in');
-    //             })
-    //             ->count();
-
-    //         // Kech qolganlar foizini hisoblash
-    //         $percent = $workersCount > 0 ? ($allComersCount * 100 / $workersCount) : 0;
-
-    //         // Type ni aniqlash
-    //         $type = $percent > 20 ? 'work_day' : 'none';
-
-    //         // Yozuvni yangilash
-    //         $days->update([
-    //             'total_workers' => $workersCount,
-    //             'workers_count' => $allComersCount,
-    //             'late_workers' => $lateWorkersCount,
-    //             'type' => $type,
-    //         ]);
-    //     }
-
-    //     return response()->json([
-    //         'success' => true,
-    //     ]);
-    // }
-    public function delete(Branch $branch)
+    
+    public function delete($id)
     {
-        if ($branch) {
-            if($branch->users()->count() > 0){
-                return response()->json([
-                   'success' => false,
-                   'message' => 'Bu filialda foydalanuvchilar mavjud'
-                ],400);
-            }
-            $branch->delete();
+        $branch1 = DB::connection('mysql_branch_1')->table('branches')->find($id);
+        $branch2 = DB::connection('mysql_branch_2')->table('branches')->find($id);
+
+        // Проверка наличия пользователей
+        $usersInBranch1 = DB::connection('mysql_branch_1')->table('users')
+            ->where('branch_id', $id)
+            ->count();
+
+        $usersInBranch2 = DB::connection('mysql_branch_2')->table('users')
+            ->where('branch_id', $id)
+            ->count();
+
+        if ($usersInBranch1 > 0 || $usersInBranch2 > 0) {
             return response()->json([
-                'success' => true,
-            ]);
+                'success' => false,
+                'message' => 'Bu filialda foydalanuvchilar mavjud'
+            ], 400);
         }
-    }
+        
+        $branch1->delete();
+        $branch2->delete();
+
+        return response()->json([
+                'success' => true,
+        ]);
+
+        }
+ 
 }

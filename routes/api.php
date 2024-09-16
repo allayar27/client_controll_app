@@ -16,13 +16,16 @@ use App\Http\Controllers\v1\Users\UserAttendanceController;
 
 
 Route::get('data', [DeviceController::class, 'all']);
+Route::post('device/add', [DeviceController::class, 'add']);
+Route::put('device/update/{id}', [DeviceController::class, 'update']);
+Route::delete('devece/delete/{id}', [DeviceController::class, 'delete']);
 Route::post('employee/login', [EmployeeController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('getme', [EmployeeController::class, 'getme']);
+    Route::get('getme', [EmployeeController::class, 'getme']); 
     Route::middleware('admincontrol')->group(function () {
         Route::post('branch/add', [BranchController::class, 'add']);
-        Route::put('branch/update/{branch}', [BranchController::class, 'update']);
+        Route::put('branch/update/{id}', [BranchController::class, 'update']);
         Route::delete('branch/delete/{branch}', [BranchController::class, 'delete']);
         //position
         Route::post('position/add', [PositionController::class, 'add']);
@@ -46,10 +49,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('schedule/delete/{schedule}', [ScheduleController::class, 'delete']);
         Route::get('users/count', [ScheduleController::class, 'all']);
 
+        // device
+        Route::post('device/add', [DeviceController::class, 'add']);
+        Route::put('device/update/{id}', [DeviceController::class, 'update']);
+        Route::delete('device/delete/{id}', [DeviceController::class, 'delete']);
+
     });
 
     Route::get('positions', [PositionController::class, 'all_positions']);
-    Route::get('branches', [BranchController::class, 'all']); //8
+    Route::get('branches', [BranchController::class, 'all']); //8 
     Route::get('users/attendance', [UserAttendanceController::class, 'all']); //2
     Route::get('users/attendance/deleted', [UserAttendanceController::class, 'allv2']);//2v2
     Route::get('users/control', [UserAttendanceController::class, 'allWithAttendance']); //5
