@@ -40,7 +40,6 @@ class DeviceController extends Controller
         $data = $request->validated();
         $device = Device::findOrFail($id);
         $branch_id = $device->branch_id;
-        BaseModel::setConnectionByBranchId($branch_id);
         $result = $device->where('id', $id)->where('branch_id', $branch_id)->update([
             'name' => $data['name'] ?? $device->name
         ]);
@@ -54,13 +53,8 @@ class DeviceController extends Controller
 
     public function delete($id)
     {
-        // $branch1 = DB::connection('mysql_branch_1')->table('devices')->find($id);
-        // $branch2 = DB::connection('mysql_branch_2')->table('devices')->find($id);
         $device = Device::findOrFail($id);
-        $branch_id = $device->branch_id;
-    
-        BaseModel::setConnectionByBranchId($branch_id);
-        if ($device->attendances()->count() > 0 && $device->clientAttendances()->count() > 0) {
+        if ($device->attendances()->count() > 0 || $device->clientAttendances()->count() > 0) {
             
             return response()->json([
                 'success' => false,

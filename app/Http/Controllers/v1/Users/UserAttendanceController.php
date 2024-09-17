@@ -29,7 +29,6 @@ class UserAttendanceController extends Controller
     {
         $day = $request->input('day', Carbon::now());
         $branch_id = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branch_id);
         $users = User::getWorkersByDate($day, $branch_id)->get();
         return response()->json([
             'success' => true,
@@ -41,7 +40,6 @@ class UserAttendanceController extends Controller
     public function allWithAttendance(Request $request)
     {
         $branch_id = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branch_id);
         $position_id = $request->input('position_id');
         $perPage = $request->input('per_page', 10);
         $day = Carbon::now();
@@ -63,7 +61,6 @@ class UserAttendanceController extends Controller
     {
         $branch_id = request('id') ?? 1;
         $day = request('day') ?? Carbon::today()->toDateString();
-        BaseModel::setConnectionByBranchId($branch_id);
         $usersQuery = User::getWorkersByDate($day, $branch_id);
         $allUsersCount = $usersQuery->count();
         $attendancesQuery = Attendance::query();
@@ -95,8 +92,6 @@ class UserAttendanceController extends Controller
     public function lastAttendances()
     {
         $perPage = request()->input('per_page', 10);
-        $branch_id = request('id') ?? 1;
-        BaseModel::setConnectionByBranchId(request('id'));
         $attendances = request('id')
             ? Attendance::where('branch_id', request('id'))->whereDate('day', request('day', Carbon::today()))->latest()
             : Attendance::whereDate('created_at', request('day', Carbon::today()))->latest();
@@ -147,9 +142,6 @@ class UserAttendanceController extends Controller
     //About user v2//6
     public function about($id, Request $request)
     {
-        $branch_id = $request->input('branch_id') ?? 1 ;
-        BaseModel::setConnectionByBranchId($branch_id);
-
         $user = User::withTrashed()->findOrFail($id);
         $month = $request->input('month') ?? Carbon::now()->format('Y-m');
         $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
@@ -197,7 +189,6 @@ class UserAttendanceController extends Controller
     public function lateComersWithDetails(Request $request)
     {
         $branchId = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branchId);
         $today = $request->input('day') ?? Carbon::today()->toDateString();
         $perPage = $request->input('per_page', 10);
         $usersQuery = User::getWorkersByDate($today, $branchId);
@@ -245,7 +236,6 @@ class UserAttendanceController extends Controller
     public function noteComers(Request $request)
     {
         $branchId = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branchId);
         $today = $request->input('day') ?? Carbon::now();
         $perPage = $request->input('per_page', 10);
         $todayAttendances = Attendance::whereDate('day', $today)->pluck('user_id')->toArray();
@@ -318,7 +308,7 @@ class UserAttendanceController extends Controller
     public function comers(Request $request)
     {
         $branchId = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branchId);
+
         $today = $request->input('day') ?? Carbon::now();
         $perPage = $request->input('per_page', 10);
         $usersQuery = User::getWorkersByDate($today, $branchId);
@@ -374,7 +364,6 @@ class UserAttendanceController extends Controller
     public function usersbyschedule(Request $request)
     {
         $branch_id = $request->input('id') ?? 1;
-        BaseModel::setConnectionByBranchId($branch_id);
         $day = $request->input('day') ?? Carbon::today();
         $users = User::getWorkersByDate($day, $branch_id)->get();
         return response()->json([

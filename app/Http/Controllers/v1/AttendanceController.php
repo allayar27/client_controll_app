@@ -17,9 +17,7 @@ class AttendanceController extends Controller
     public function add(AttendanceAddRequest $request)
     {
         $device = Device::findOrFail($request->device_id);
-        $branchId = $device->branch_id;
-        //return $branchId;
-        BaseModel::setConnectionByBranchId($branchId);
+    
         DB::beginTransaction();
         try {
             $user = User::findOrFail($request->user_id);

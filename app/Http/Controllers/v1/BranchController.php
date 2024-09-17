@@ -22,67 +22,30 @@ class BranchController extends Controller
     {
         $data = $request->validated();
 
-        try {
-            DB::connection('mysql_branch_1')->transaction(function () use ($data) {
-                DB::connection('mysql_branch_1')->table('branches')->insert($data);
-            });
+        $data = $request->validated();
+        $branch = Branch::create([
+            'name' => $data['name'],
+            'location' => $data['location'],
+        ]);
 
-            DB::connection('mysql_branch_2')->transaction(function () use ($data) {
-                DB::connection('mysql_branch_2')->table('branches')->insert($data);
-            });
-
-            return response()->json([
-                'success' => true,
-            ], 201);
-
-        } catch (\Exception $e) {
-
-            return response()->json([
-                'error' => 'An error occurred while recording branches.',
-                'details' => $e->getMessage(),
-                'line' => $e->getLine(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $branch
+        ], 201);
     }
 
 
-    public function update($id)
+    public function update(Request $request, Branch $branch)
     {
-        
-        $branch1 = DB::connection('mysql_branch_1')->table('branches')->find($id);
-        $branch2 = DB::connection('mysql_branch_2')->table('branches')->find($id);
 
-        if ($branch1 && $branch2) {
-            try {
-                DB::connection('mysql_branch_1')->transaction(function () use ($branch1, $id) {
-                    DB::connection('mysql_branch_1')->table('branches')->where('id', $id)->update([
-                        'name' => request()->input('name', $branch1->name),
-                        'location' => request()->input('location', $branch1->location),
-                    ]);
-                });
-
-                DB::connection('mysql_branch_2')->transaction(function () use ($branch2, $id) {
-                    DB::connection('mysql_branch_2')->table('branches')->where('id', $id)->update([
-                        'name' => request()->input('name', $branch2->name),
-                        'location' => request()->input('location', $branch2->location),
-                    ]);
-                });
-
-                return response()->json([
-                    'success' => true,
-                ], 200);
-
-            } catch (\Exception $e) {
-                return response()->json([
-                    'error' => 'An error occurred while updating branches.',
-                    'details' => $e->getMessage(),
-                    'line' => $e->getLine(),
-                ], 500);
-            }
-        } else {
+        if ($branch) {
+            $branch->update([
+                'name' => $request->input('name', $branch->name),
+                'location' => $request->input('location', $branch->location),
+            ]);
             return response()->json([
-                'error' => 'Branch not found.',
-            ], 404);
+                'success' => true,
+            ]);
         }
     }
 
@@ -97,33 +60,20 @@ class BranchController extends Controller
     }
 
     
-    public function delete($id)
+    public function delete(Branch $branch)
     {
-        $branch1 = DB::connection('mysql_branch_1')->table('branches')->find($id);
-        $branch2 = DB::connection('mysql_branch_2')->table('branches')->find($id);
-
-        // Проверка наличия пользователей
-        $usersInBranch1 = DB::connection('mysql_branch_1')->table('users')
-            ->where('branch_id', $id)
-            ->count();
-
-        $usersInBranch2 = DB::connection('mysql_branch_2')->table('users')
-            ->where('branch_id', $id)
-            ->count();
-
-        if ($usersInBranch1 > 0 || $usersInBranch2 > 0) {
+        if ($branch) {
+            if ($branch->users()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bu filialda foydalanuvchilar mavjud'
+                ], 400);
+            }
+            $branch->delete();
             return response()->json([
-                'success' => false,
-                'message' => 'Bu filialda foydalanuvchilar mavjud'
-            ], 400);
-        }
-        
-        $branch1->delete();
-        $branch2->delete();
-
-        return response()->json([
                 'success' => true,
-        ]);
+            ]);
+        }
 
         }
  

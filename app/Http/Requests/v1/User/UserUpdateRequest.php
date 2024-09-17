@@ -27,18 +27,10 @@ class UserUpdateRequest extends FormRequest
             'branch_id' => 'exists:branches,id',
             'position_id' => 'exists:positions,id',
             'schedule_id' => 'exists:schedules,id',
-            'phone' =>'string',
+            'phone' => 'string',
             'images' => 'array',
             'images.*' => 'file',
         ];
     }
 
-    protected function prepareForValidation()
-    {
-        $branch_id = $this->get('branch_id');
-        if ($branch_id) {
-            BaseModel::setConnectionByBranchId($branch_id);
-        }
-
-    }
 }

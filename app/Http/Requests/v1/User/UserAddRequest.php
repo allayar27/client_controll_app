@@ -32,13 +32,4 @@ class UserAddRequest extends FormRequest
             'images.*' => 'file',
         ];
     }
-
-    protected function prepareForValidation()
-    {
-        $branch_id = $this->get('branch_id');
-        if ($branch_id) {
-            BaseModel::setConnectionByBranchId($branch_id);
-        }
-
-    }
 }

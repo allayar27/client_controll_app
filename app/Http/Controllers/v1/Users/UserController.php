@@ -48,7 +48,7 @@ class UserController extends Controller
 
     public function update($id, UserUpdateRequest $request)
     {
-        
+
         $user = User::findOrFail($id);
         $data = $request->validated();
         if ($user) {
@@ -72,14 +72,12 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
         ], 201);
-        
+
     }
 
     public function delete($id)
     {
         $user = User::findOrFail($id);
-        $branch_id = $user->branch_id;
-        BaseModel::setConnectionByBranchId($branch_id);
         if ($user) {
             $user->delete();
             return response()->json([

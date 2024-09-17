@@ -7,14 +7,12 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Employee\EmployeeAddRequest;
 use App\Http\Resources\v1\Employee\EmployeeGetResource;
-use App\Models\BaseModel;
 use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
     public function login(Request $request)
     {
-        BaseModel::setConnectionByBranchId(1);
         $user = Employee::where('email', $request->email)->first();
         if (!$user or !Hash::check($request->password, $user->password)) {
             return response()->json([
